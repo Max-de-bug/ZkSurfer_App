@@ -40,6 +40,11 @@ import { useFormStore } from "@/stores/form-store";
 import useSWR, { mutate } from "swr";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import { cn } from "@/lib/utils";
+import { Icons } from "@/component/ui/icons";
+import RenderChatMessages from "./renderChatMessages";
+import FooterComponent from "./footer";
+import Footer from "./footer";
 
 interface GeneratedTweet {
   tweet: string;
@@ -47,7 +52,7 @@ interface GeneratedTweet {
 }
 
 //type Command = 'image-gen' | 'create-agent' | 'content';
-type Command =
+export type Command =
   | "image-gen"
   | "create-agent"
   | "select"
@@ -129,7 +134,7 @@ interface FileObject {
   isVideoOrAudio?: boolean;
 }
 
-interface Message {
+export interface Message {
   role: "user" | "assistant";
   content:
     | string
@@ -159,7 +164,10 @@ interface Message {
 //     </div>
 // );
 
-const TickerPopup: React.FC<TickerPopupProps> = ({ tickers, onSelect }) => (
+export const TickerPopup: React.FC<TickerPopupProps> = ({
+  tickers,
+  onSelect,
+}) => (
   <div className="absolute bottom-full left-0 bg-[#171D3D] rounded-lg shadow-lg">
     {tickers.map((ticker, index) => (
       <button
@@ -1430,6 +1438,9 @@ const HomeContent: FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (inputRef.current) {
+      inputRef.current.style.height = "2.5rem";
+    }
     if (isInitialView) {
       setIsInitialView(false); // Remove the initial boxes on first submit
     }
@@ -3077,13 +3088,14 @@ In addition to the tweets, use ${JSON.stringify(
   const [loading, setLoading] = useState(false);
 
   const handleMintNFT = async (base64Image: string) => {
-    setLoading(true);
+    console.log("function is triggering");
     try {
       // const { txSignature, result } = await createNft(base64Image, 'NFT', wallet);
 
       // console.log('signature', txSignature)
       // console.log('result', result)
       const response = await createNft(base64Image, "NFT", wallet);
+      // setLoading(true);
 
       console.log(response);
       // const metaplexUrl = `https://core.metaplex.com/explorer/${assetPublicKey}?env=devnet`;
@@ -3168,7 +3180,7 @@ In addition to the tweets, use ${JSON.stringify(
                 );
               }
               return (
-                <div key={index} className="text-white">
+                <div key={index} className="text-white text-clip">
                   {renderTextContent(content.text || "")}
                 </div>
               );
@@ -3239,6 +3251,7 @@ In addition to the tweets, use ${JSON.stringify(
       if (index % 2 === 0) {
         const formattedPart = part.replace(/\n/g, "\n\n");
         // This is regular text - pass the current part, not the whole content
+        console.log(formattedPart);
         return <ReactMarkdown key={index}>{formattedPart}</ReactMarkdown>;
       } else {
         // This is a code block
@@ -3696,9 +3709,9 @@ In addition to the tweets, use ${JSON.stringify(
 
           {/* Chat messages */}
           <div className=" flex flex-col justify-between w-full">
-            <div className="flex-grow overflow-x-auto px-4 py-8 max-h-[650px] ">
+            <div className="px-4 py-8 flex-grow overflow-y-auto">
               {isInitialView ? (
-                <div className="flex flex-col items-center justify-center h-full">
+                <div className="flex flex-col items-center justify-start h-full">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
                     {sampleCommands.map((cmd, index) => (
                       <div
@@ -3720,296 +3733,43 @@ In addition to the tweets, use ${JSON.stringify(
                 </div>
               ) : (
                 <div>
-                  {/* Render chat messages */}
-                  {displayMessages.map((message, index) => (
-                    <div key={index} className="mb-4 flex justify-start w-full">
-                      <div
-                        key={index}
-                        className="mb-4 flex justify-start w-full"
-                      >
-                        <div className="flex-shrink-0 mr-3">
-                          <div className="w-10 h-10 rounded-full bg-[#171D3D] border flex items-center justify-center">
-                            {message.role === "user" ? (
-                              <span>U</span>
-                            ) : (
-                              <Image
-                                src="images/tiger.svg"
-                                alt="logo"
-                                width={40}
-                                height={40}
-                                className="p-2"
-                              />
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-start">
-                          <div className="flex items-center justify-between w-full mt-2">
-                            <span
-                              className={`flex justify-between items-center text-md text-gray-400 font-sourceCode ${
-                                message.role !== "user" &&
-                                "bg-gradient-to-br from-zkIndigo via-zkLightPurple to-zkPurple bg-clip-text text-transparent"
-                              } ${!isMobile ? `mt-0.5` : ``}`}
-                            >
-                              {message.role === "user" ? "User" : "ZkTerminal"}
-                            </span>
-                            {message.role !== "user" && (
-                              <div className="flex space-x-2">
-                                <button className="text-white rounded-lg">
-                                  <Image
-                                    src="images/Download.svg"
-                                    alt="logo"
-                                    width={20}
-                                    height={20}
-                                  />
-                                </button>
-                                <button className="text-white rounded-lg">
-                                  <Image
-                                    src="images/share.svg"
-                                    alt="logo"
-                                    width={20}
-                                    height={20}
-                                  />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          {message.role === "assistant" &&
-                          typeof message.content === "string" &&
-                          message.content.startsWith("/") ? (
-                            <ResultBlock
-                              content={message.content}
-                              type="image"
-                              onMintNFT={handleMintNFT}
-                              onDownloadProof={handleDownload}
-                              imageResultType={message.command}
-                              // onLaunchMemeCoin={message.command === 'meme-coin' ? () => router.push('/memelaunch') : undefined}
-                              onLaunchMemeCoin={
-                                message.command === "create-agent"
-                                  ? handleLaunchMemeCoin
-                                  : undefined
-                              }
-                              loading={loading}
-                            />
-                          ) : (
-                            <div className="inline-block p-1 rounded-lg text-white">
-                              {renderMessageContent(message)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {isLoading &&
-                    (processingCommand ? (
-                      // Custom loader for /create-agent and /image-gen
-                      <ResultBlock
-                        type="image"
-                        processing={true}
-                        onDownloadProof={handleDownload}
-                        imageResultType={imageResultType}
-                        onMintNFT={handleMintNFT}
-                        onLaunchMemeCoin={handleLaunchMemeCoin}
-                      />
-                    ) : (
-                      // Default loader
-                      <div className="text-center">
-                        <span className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></span>
-                        <p>
-                          Processing your query. This may take up to 5
-                          minutes...
-                        </p>
-                      </div>
-                    ))}
+                  <RenderChatMessages
+                    displayMessages={displayMessages}
+                    isLoading={isLoading}
+                    processingCommand={processingCommand}
+                    handleMintNFT={handleMintNFT}
+                    handleDownload={handleDownload}
+                    renderMessageContent={renderMessageContent}
+                    imageResultType={imageResultType}
+                    handleLaunchMemeCoin={handleLaunchMemeCoin}
+                    isMobile={isMobile}
+                  />
                 </div>
               )}
+
+              <Footer
+                files={files}
+                handleSubmit={handleSubmit}
+                handleFileChange={handleFileChange}
+                removeFile={removeFile}
+                inputRef={inputRef}
+                inputMessage={inputMessage}
+                handleInputChange={handleInputChange}
+                wallet={wallet}
+                showCommandPopup={showCommandPopup}
+                commandPopupRef={commandPopupRef}
+                handleCommandSelect={handleCommandSelect}
+                showTickerPopup={showTickerPopup}
+                tickers={tickers}
+                handleTickerSelect={handleTickerSelect}
+                isLoading={isLoading}
+                isMobile={isMobile}
+                isMenuOpen={isMenuOpen}
+              />
             </div>
-
-            <footer className="w-full py-6 flex justify-center px-2">
-              <div
-                className={`bg-gradient-to-tr from-[#000D33] via-[#9A9A9A] to-[#000D33] p-0.5 rounded-lg ${
-                  !isMobile ? "w-2/5" : "w-full"
-                } w-3/4`}
-              >
-                <form
-                  onSubmit={handleSubmit}
-                  className="w-full flex flex-col bg-[#08121f] rounded-lg"
-                >
-                  {files.length > 0 && (
-                    // <div className="flex flex-wrap gap-2 p-2">
-                    //     {files.map((file, index) => (
-                    //         <div key={index} className="relative w-20 h-20">
-                    //             {file.isPdf ? (
-                    //                 <div className="w-full h-full flex items-center justify-center bg-[#24284E] rounded-lg text-xs text-[#BDA0FF] text-center overflow-hidden p-1 border border-[#BDA0FF]">
-                    //                     {file.file.name}
-                    //                 </div>
-                    //             ) : (
-                    //                 <Image
-                    //                     src={file.preview}
-                    //                     alt={`Preview ${index}`}
-                    //                     width={500}
-                    //                     height={500}
-                    //                     className="w-full h-full object-cover rounded-lg"
-                    //                     layout="responsive"
-                    //                 />
-                    //             )}
-                    //             <button
-                    //                 onClick={() => removeFile(index)}
-                    //                 className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
-                    //                 type="button"
-                    //             >
-                    //                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    //                     <line x1="18" y1="6" x2="6" y2="18"></line>
-                    //                     <line x1="6" y1="6" x2="18" y2="18"></line>
-                    //                 </svg>
-                    //             </button>
-                    //         </div>
-                    //     ))}
-                    // </div>
-                    <div className="flex flex-wrap gap-2 p-2">
-                      {files.map((file, index) => (
-                        <div key={index} className="relative w-20 h-20">
-                          {file.isPdf ? (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-800 text-xs text-white rounded-lg">
-                              {file.file.name}
-                            </div>
-                          ) : file.isVideoOrAudio ? (
-                            <div className="w-full h-full">
-                              {file.file.type.startsWith("video/") ? (
-                                <video
-                                  src={file.preview}
-                                  controls
-                                  className="w-full h-full object-cover rounded-lg"
-                                />
-                              ) : (
-                                <audio
-                                  src={file.preview}
-                                  controls
-                                  className="w-full object-cover rounded-lg"
-                                />
-                              )}
-                            </div>
-                          ) : (
-                            <img
-                              src={file.preview}
-                              alt={`Preview ${index}`}
-                              className="w-full h-full object-cover rounded-lg"
-                            />
-                          )}
-                          <button
-                            onClick={() => removeFile(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 rounded-full p-1"
-                            type="button"
-                          >
-                            ✖
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center">
-                    <input
-                      type="file"
-                      onChange={handleFileChange}
-                      //accept="image/*,.pdf"
-                      accept="image/*,.pdf,video/*,audio/*"
-                      className="hidden"
-                      id="fileInput"
-                      multiple
-                      disabled={!wallet.connected}
-                    />
-                    <label
-                      htmlFor="fileInput"
-                      className={`flex items-center justify-center bg-[#08121f] text-white rounded-lg px-3 py-2 ${
-                        !wallet.connected
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer"
-                      }`}
-                      style={{
-                        height: "2.5rem", // Match the initial height of the textarea
-                      }}
-                    >
-                      <Image
-                        src="/images/Attach.svg"
-                        alt="Attach file"
-                        width={20}
-                        height={20}
-                      />
-                    </label>
-
-                    {/* Textarea for input */}
-                    <div className="relative w-full flex items-center bg-transparent py-1 mt-2 px-4 rounded-l-full">
-                      <textarea
-                        ref={inputRef}
-                        value={inputMessage}
-                        onChange={handleInputChange}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault(); // Prevent default new line
-                            handleSubmit(e); // Pass the event to handleSubmit
-                          }
-                        }}
-                        placeholder="Message ZkTerminal"
-                        className="w-full resize-none overflow-y-auto bg-[#08121f] text-white rounded-lg placeholder-[#A0AEC0] focus:outline-none"
-                        style={{
-                          lineHeight: "1.5",
-                          height: "2.5rem", // Same initial height as the label
-                          maxHeight: "10rem", // Limit height to 10rem
-                          boxSizing: "border-box",
-                        }}
-                        onInput={(e) => {
-                          const target = e.target as HTMLTextAreaElement;
-                          target.style.height = "2.5rem"; // Reset to the default height
-                          target.style.height = `${Math.min(
-                            target.scrollHeight,
-                            160
-                          )}px`; // Adjust height dynamically
-                        }}
-                        disabled={!wallet.connected}
-                      />
-
-                      {showCommandPopup && (
-                        <div ref={commandPopupRef}>
-                          <CommandPopup onSelect={handleCommandSelect} />
-                        </div>
-                      )}
-                      {showTickerPopup && (
-                        <TickerPopup
-                          tickers={tickers}
-                          onSelect={handleTickerSelect}
-                        />
-                      )}
-                    </div>
-
-                    {/* Submit button */}
-                    <button
-                      type="submit"
-                      className="bg-white text-black p-1 m-1 rounded-md font-bold"
-                      style={{
-                        height: "1.5rem", // Same height as the textarea
-                      }}
-                      disabled={isLoading || !wallet.connected}
-                    >
-                      <BsArrowReturnLeft />
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </footer>
           </div>
         </div>
       </div>
-
-      {/* <div className="h-screen right-0 top-0">
-                <TweetPanel
-                    tweets={generatedTweets}
-                    wallet={wallet.publicKey?.toString()}
-                    ticker={activeNavbarTicker}
-                    onClose={() => setShowTweetPanel(false)}
-                    generatedTweet={tweets}
-                />
-            </div> */}
     </div>
   );
 };
