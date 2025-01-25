@@ -4,8 +4,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import AppWalletProvider from "@/component/AppWalletProvider";
 import Providers from "@/component/Provider";
-import '../../polyfills';
+import "../../polyfills";
 import { Toaster } from "sonner";
+import { cn } from "@/lib/utils";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -61,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr">
       <head />
-      <body className={inter.className}>
+      <body className={cn(inter.className, "custom-scrollbar")}>
         <Providers>
           <AppWalletProvider>
             {children}

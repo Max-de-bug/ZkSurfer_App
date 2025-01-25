@@ -3946,10 +3946,8 @@ In addition to the tweets, use ${JSON.stringify(
                         onChange={handleInputChange}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            if (inputMessage.trim() !== "") {
-                              handleSubmit(e);
-                            }
+                            e.preventDefault(); // Prevent default new line
+                            handleSubmit(e); // Pass the event to handleSubmit
                           }
                         }}
                         placeholder="Message ZkTerminal"
@@ -3987,19 +3985,11 @@ In addition to the tweets, use ${JSON.stringify(
                     {/* Submit button */}
                     <button
                       type="submit"
-                      className={`p-1 m-1 rounded-md font-bold ${
-                        inputMessage.trim() === ""
-                          ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                          : "bg-white text-black"
-                      }`}
+                      className="bg-white text-black p-1 m-1 rounded-md font-bold"
                       style={{
                         height: "1.5rem", // Same height as the textarea
                       }}
-                      disabled={
-                        isLoading ||
-                        !wallet.connected ||
-                        inputMessage.trim() === ""
-                      }
+                      disabled={isLoading || !wallet.connected}
                     >
                       <BsArrowReturnLeft />
                     </button>
@@ -4023,5 +4013,4 @@ In addition to the tweets, use ${JSON.stringify(
     </div>
   );
 };
-
 export default HomeContent;
